@@ -1,0 +1,262 @@
+@model PolicyTrackerWebClient.Domain.ReconciliationReport
+@{
+    ViewBag.Title = "Reconciliation";
+    var unallocated = Model.UnallocatedPayouts.Sum(x => x.AmountReceived);
+    var netGap = Model.TotalUnexplained - unallocated;
+}
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2 align-items-center">
+                <div class="col-md-6">
+                    <h1 class="m-0">Commission Reconciliation</h1>
+                    <small class="text-muted">@(string.IsNullOrEmpty(Model.Broker) ? "All brokers" : Model.Broker) · generated @Model.GeneratedOn.ToString("dd-MMM-yyyy HH:mm")</small>
+                </div>
+                <div class="col-md-6 no-print">
+                    <form method="get" class="d-flex justify-content-md-end align-items-center" style="gap:.5rem">
+                        @Html.DropDownList("brokerId", ViewBag.Brokers as List<SelectListItem>, "All brokers", new { @class = "form-control setPagesize", onchange = "this.form.submit()" })
+                        <button type="button" class="btn btn-default" onclick="window.print()"><i class="fas fa-print"></i> Print / PDF</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Summary -->
+            <div class="row">
+                <div class="col-md-3 col-6">
+                    <div class="info-box"><div class="info-box-content">
+                        <span class="info-box-text">Commission as per statements</span>
+                        <span class="info-box-number">@Model.TotalCommission.ToRupees()</span>
+                    </div></div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="info-box"><div class="info-box-content">
+                        <span class="info-box-text">Received in bank</span>
+                        <span class="info-box-number">@Model.TotalReceived.ToRupees()</span>
+                        <small class="text-muted">TDS explains @Model.TotalTds.ToRupees()</small>
+                    </div></div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="info-box"><div class="info-box-content">
+                        <span class="info-box-text">Short after TDS</span>
+                        <span class="info-box-number @(Model.TotalUnexplained > 1 ? "text-danger" : "")">@Model.TotalUnexplained.ToRupees()</span>
+                        @if (unallocated > 0)
+                        {<small class="text-muted">@unallocated.ToRupees() paid separately → net @netGap.ToRupees()</small>}
+                    </div></div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="info-box"><div class="info-box-content">
+                        <span class="info-box-text">Missing from statements</span>
+                        <span class="info-box-number text-danger">@Model.MissingFromStatement.Count policies</span>
+                        <small class="text-muted">premium @Model.MissingPremium.ToRupees() · ≈ @Model.MissingCommissionEstimate.ToRupees() commission</small>
+                    </div></div>
+                </div>
+            </div>
+
+            <!-- 1. Month-wise -->
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">1. Statement vs bank, month by month</h3></div>
+                <div class="card-body p-0 table-responsive">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Statement month</th>
+                                <th class="text-right">Policies</th>
+                                <th class="text-money">Commission</th>
+                                <th class="text-money">Received</th>
+                                <th>Received on</th>
+                                <th class="text-money">Short by</th>
+                                <th class="text-money">TDS</th>
+                                <th class="text-money">Unexplained</th>
+                                <th class="text-right">% received</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var m in Model.Months)
+                            {
+                                <tr>
+                                    <td>@m.StatementMonth.ToMonthText()</td>
+                                    <td class="text-right">@m.Policies</td>
+                                    <td class="text-money">@m.Commission.ToRupees()</td>
+                                    <td class="text-money">@m.Received.ToRupees()</td>
+                                    <td>@m.ReceivedOn.ToDisplayDate()</td>
+                                    <td class="text-money">@m.ShortBy.ToRupees()</td>
+                                    <td class="text-money">@m.Tds.ToRupees() <small class="text-muted">(@m.TdsRate%)</small></td>
+                                    <td class="text-money @(m.Unexplained > 1 ? "text-danger font-weight-bold" : "")">@m.Unexplained.ToRupees()</td>
+                                    <td class="text-right">@(m.PercentReceived.HasValue ? m.PercentReceived.Value.ToString("0.0") + "%" : "")</td>
+                                </tr>
+                            }
+                            @if (Model.Months.Count == 0)
+                            {
+                                <tr><td colspan="9" class="text-center text-muted">No statements imported yet.</td></tr>
+                            }
+                        </tbody>
+                        <tfoot class="font-weight-bold bg-light">
+                            <tr>
+                                <td>Total</td>
+                                <td class="text-right">@Model.Months.Sum(x => x.Policies)</td>
+                                <td class="text-money">@Model.TotalCommission.ToRupees()</td>
+                                <td class="text-money">@Model.Months.Sum(x => x.Received).ToRupees()</td>
+                                <td></td>
+                                <td class="text-money">@Model.TotalShortBy.ToRupees()</td>
+                                <td class="text-money">@Model.TotalTds.ToRupees()</td>
+                                <td class="text-money text-danger">@Model.TotalUnexplained.ToRupees()</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            @if (Model.UnallocatedPayouts.Count > 0)
+            {
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">2. Payments not tied to a statement month</h3></div>
+                    <div class="card-body p-0 table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="bg-light"><tr><th>Received on</th><th>Paid by</th><th class="text-money">Amount</th><th>Remarks</th></tr></thead>
+                            <tbody>
+                                @foreach (var p in Model.UnallocatedPayouts)
+                                {
+                                    <tr><td>@p.ReceivedOn.ToDisplayDate()</td><td>@p.PaidByFirm</td><td class="text-money">@p.AmountReceived.ToRupees()</td><td>@p.Remarks</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer small text-muted">Ask the broker which months these cover, then edit the payout and set its statement month.</div>
+                </div>
+            }
+
+            <!-- 3. Missing -->
+            <div class="card card-danger card-outline">
+                <div class="card-header"><h3 class="card-title">3. Policies we gave the broker that are not on any statement (@Model.MissingFromStatement.Count)</h3></div>
+                <div class="card-body p-0 table-responsive">
+                    <table class="table table-sm table-bordered table-striped mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Start</th>
+                                <th>Customer</th>
+                                <th>Category / Company</th>
+                                <th>Policy No</th>
+                                <th class="text-money">Net premium</th>
+                                <th class="text-money">Expected commission</th>
+                                <th>Given to</th>
+                                <th>Proof</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{ var i = 0; }
+                            @foreach (var p in Model.MissingFromStatement)
+                            {
+                                i++;
+                                <tr>
+                                    <td>@i</td>
+                                    <td class="nowrap">@p.StartDate.ToDisplayDate()</td>
+                                    <td>@p.CustomerName</td>
+                                    <td>@p.Category<br /><small class="text-muted">@p.InsuranceCompany</small></td>
+                                    <td class="nowrap">@p.PolicyNo</td>
+                                    <td class="text-money">@p.NetPremium.ToRupees()</td>
+                                    <td class="text-money">@p.ExpectedCommission.ToRupees()</td>
+                                    <td>@p.BrokerStaff <small class="text-muted">@p.SubmittedToBrokerOn.ToDisplayDate()</small></td>
+                                    <td>@p.ProofRef</td>
+                                </tr>
+                            }
+                            @if (Model.MissingFromStatement.Count == 0)
+                            {
+                                <tr><td colspan="9" class="text-center text-muted">Nothing missing.</td></tr>
+                            }
+                        </tbody>
+                        @if (Model.MissingFromStatement.Count > 0)
+                        {
+                            <tfoot class="font-weight-bold bg-light">
+                                <tr><td colspan="5">Total</td><td class="text-money">@Model.MissingPremium.ToRupees()</td><td class="text-money">@Model.MissingCommissionEstimate.ToRupees()</td><td colspan="2"></td></tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            </div>
+
+            <!-- 4. Points -->
+            <div class="card card-warning card-outline">
+                <div class="card-header"><h3 class="card-title">4. Paid at lower points than expected (@Model.PointsIssues.Count)</h3></div>
+                <div class="card-body p-0 table-responsive">
+                    <table class="table table-sm table-bordered table-striped mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Customer</th>
+                                <th>Policy No</th>
+                                <th>Product</th>
+                                <th class="text-money">Net premium</th>
+                                <th class="text-right">Points paid</th>
+                                <th class="text-right">Expected</th>
+                                <th class="text-money">Paid</th>
+                                <th class="text-money">Expected</th>
+                                <th class="text-money">Difference</th>
+                                <th>Why</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var x in Model.PointsIssues)
+                            {
+                                <tr>
+                                    <td>@x.CustomerName</td>
+                                    <td class="nowrap">@x.PolicyNo</td>
+                                    <td>@x.Product</td>
+                                    <td class="text-money">@x.NetPremium.ToRupees()</td>
+                                    <td class="text-right">@x.PointsPaid</td>
+                                    <td class="text-right">@x.PointsExpected</td>
+                                    <td class="text-money">@x.Value.ToRupees()</td>
+                                    <td class="text-money">@x.ValueExpected.ToRupees()</td>
+                                    <td class="text-money text-danger">@x.Difference.ToRupees()</td>
+                                    <td><small>@x.Issue</small></td>
+                                </tr>
+                            }
+                            @if (Model.PointsIssues.Count == 0)
+                            {
+                                <tr><td colspan="10" class="text-center text-muted">No points differences found.</td></tr>
+                            }
+                        </tbody>
+                        @if (Model.PointsIssues.Count > 0)
+                        {
+                            <tfoot class="font-weight-bold bg-light">
+                                <tr><td colspan="8">Total</td><td class="text-money text-danger">@Model.PointsIssues.Sum(x => x.Difference ?? 0).ToRupees()</td><td></td></tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            </div>
+
+            <!-- 5. Data -->
+            @if (Model.DataIssues.Count > 0)
+            {
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">5. Statement rows with wrong data (@Model.DataIssues.Count)</h3></div>
+                    <div class="card-body p-0 table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="bg-light"><tr><th>Month</th><th>Customer</th><th>Policy No on statement</th><th>POS</th><th class="text-money">Value</th><th>Problem</th></tr></thead>
+                            <tbody>
+                                @foreach (var s in Model.DataIssues)
+                                {
+                                    <tr>
+                                        <td>@s.StatementMonth.ToMonthText()</td>
+                                        <td>@s.CustomerName</td>
+                                        <td>@s.PolicyNo</td>
+                                        <td>@s.PosCode</td>
+                                        <td class="text-money">@s.Value.ToRupees()</td>
+                                        <td><small>@s.Remarks</small></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer small text-muted">Ask the broker to correct these in their system so renewals are booked under the right policy number and POS code.</div>
+                </div>
+            }
+        </div>
+    </section>
+</div>
+<script>$(function () { App.toast(@Html.Js((object)ViewBag.NotificationType), @Html.Js((object)ViewBag.NotificationMsg)); });</script>

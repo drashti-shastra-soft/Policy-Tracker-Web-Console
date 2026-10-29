@@ -1,0 +1,64 @@
+@model PolicyTrackerWebClient.Domain.ChangePassword
+@{
+    ViewBag.Title = "Change Password";
+}
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6"><h1>Change Password</h1></div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="@Url.Action("Index", "Dashboard")">Home</a></li>
+                        <li class="breadcrumb-item active">Change Password</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="content">
+        <div class="row">
+            <div class="col-lg-5 col-md-7">
+                <div class="card card-primary card-outline">
+                    @using (Html.BeginForm("Index", "ChangePassword", FormMethod.Post, new { id = "frmChangePassword" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Current Password <span class="text-danger">*</span></label>
+                                @Html.PasswordFor(m => m.CurrentPassword, new { @class = "form-control", data_required = "Current password", autocomplete = "current-password" })
+                                <span class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label>New Password <span class="text-danger">*</span></label>
+                                @Html.PasswordFor(m => m.NewPassword, new { @class = "form-control", data_required = "New password", autocomplete = "new-password" })
+                                <span class="text-danger"></span>
+                                <small class="form-text text-muted">At least 8 characters.</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Confirm New Password <span class="text-danger">*</span></label>
+                                @Html.PasswordFor(m => m.ConfirmPassword, new { @class = "form-control", data_required = "Confirmation", autocomplete = "new-password" })
+                                <span class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary">Change Password</button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+<script>
+    $(function () {
+        App.toast(@Html.Js((object)ViewBag.NotificationType), @Html.Js((object)ViewBag.NotificationMsg));
+        $('#frmChangePassword').on('submit', function (e) {
+            var ok = App.validate(this);
+            var np = $('#NewPassword').val() || '';
+            if (ok && np.length < 8) { $('#NewPassword').siblings('span.text-danger').text('At least 8 characters.'); ok = false; }
+            if (ok && np !== $('#ConfirmPassword').val()) { $('#ConfirmPassword').siblings('span.text-danger').text('Passwords do not match.'); ok = false; }
+            if (!ok) e.preventDefault();
+        });
+    });
+</script>

@@ -1,0 +1,51 @@
+@model PolicyTrackerWebClient.Domain.PolicyLister
+@{
+    ViewBag.Title = "Policies";
+}
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6"><h1>Policies</h1></div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="@Url.Action("Index", "Dashboard")">Home</a></li>
+                        <li class="breadcrumb-item active">Policies</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="card">
+            @using (Ajax.BeginForm("List", "Policy", new AjaxOptions() { UpdateTargetId = "divList", InsertionMode = InsertionMode.Replace, LoadingElementId = "loading-element" }, new { @id = "frmList" }))
+            {
+                <div id="divList">
+                    @Html.Action("List", Model)
+                </div>
+            }
+        </div>
+
+        @using (Ajax.BeginForm("Create", "Policy", new AjaxOptions() { UpdateTargetId = "divCreate", InsertionMode = InsertionMode.Replace, LoadingElementId = "loading-element" }, new { @id = "frmCreate" }))
+        {
+            <div id="divCreate"></div>
+        }
+
+        @using (Ajax.BeginForm("FollowUp", "Policy", new AjaxOptions() { UpdateTargetId = "divFollowUp", InsertionMode = InsertionMode.Replace, LoadingElementId = "loading-element" }, new { @id = "frmFollowUp" }))
+        {
+            <div id="divFollowUp"></div>
+        }
+    </section>
+</div>
+
+<script>
+    $(function () {
+        $(document).off('click', '.add-policy').on('click', '.add-policy', function () { App.openModal('@Url.Action("Create", "Policy")'); });
+        $(document).off('click', '.icon-edit').on('click', '.icon-edit', function () { App.openModal('@Url.Action("Get", "Policy")/' + $(this).data('id')); });
+        $(document).off('click', '.icon-followup').on('click', '.icon-followup', function () { App.openModal('@Url.Action("FollowUp", "Policy")/' + $(this).data('id'), '#divFollowUp'); });
+        $(document).off('click', '.icon-delete').on('click', '.icon-delete', function () {
+            App.action('@Url.Action("Delete", "Policy")/' + $(this).data('id'), 'Delete this policy? Any statement lines linked to it will be unlinked.');
+        });
+    });
+</script>

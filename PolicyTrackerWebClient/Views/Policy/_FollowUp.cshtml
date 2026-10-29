@@ -1,0 +1,240 @@
+@model PolicyTrackerWebClient.Domain.RenewalFollowUp
+@{
+    var d = "{0:yyyy-MM-dd}";
+    var p = ViewBag.Policy as PolicyTrackerWebClient.Domain.Policy ?? new PolicyTrackerWebClient.Domain.Policy();
+}
+<div class="modal fade" id="modal-followup" tabindex="-1" aria-labelledby="FollowUpModalLabel" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h1 class="modal-title h5" id="FollowUpModalLabel">Renewal follow-up – @p.CustomerName</h1>
+                    <small class="text-muted">
+                        @p.Category · @p.InsuranceCompany · @p.PolicyNo · expires @p.ExpiryDate.ToDisplayDate()
+                        @if (p.NetPremium.HasValue)
+                        {<span> · last premium @p.NetPremium.ToRupees()</span>}
+                    </small>
+                    <div class="mt-1">@Html.ContactLinks(p.MobileNo)</div>
+                </div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                @Html.HiddenFor(m => m.PolicyId)
+                @Html.HiddenFor(m => m.RenewedPolicyId)
+
+                <div class="form-group">
+                    <label class="d-block">What happened? <span class="text-danger">*</span></label>
+                    <div class="btn-group btn-group-toggle flex-wrap" data-toggle="buttons" id="grpStatus">
+                        @foreach (var opt in (ViewBag.RenewalStatuses as List<SelectListItem>))
+                        {
+                            var icon = opt.Value == "Quote Sent" ? "fa-paper-plane" : opt.Value == "Follow Up" ? "fa-phone" : opt.Value == "Renewed" ? "fa-check" : "fa-times";
+                            var cls = opt.Value == "Renewed" ? "btn-outline-success" : opt.Value == "Lost" ? "btn-outline-danger" : "btn-outline-primary";
+                            <label class="btn @cls @(opt.Value == Model.RenewalStatus ? "active" : "")">
+                                <input type="radio" name="RenewalStatus" value="@opt.Value" autocomplete="off" @(opt.Value == Model.RenewalStatus ? "checked" : "") />
+                                <i class="fas @icon"></i> @opt.Text
+                            </label>
+                        }
+                    </div>
+                    <span class="text-danger d-block" id="errStatus"></span>
+                </div>
+
+                <!-- Quote sent / follow up -->
+                <div class="followup-section sec-quote">
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label>Quote sent on</label>
+                            @Html.TextBoxFor(m => m.QuoteSentOn, d, new { @class = "form-control", type = "date" })
+                        </div>
+                        <div class="col-md-8 form-group">
+                            <label>Quote / call notes</label>
+                            @Html.TextBoxFor(m => m.QuoteDetails, new { @class = "form-control", placeholder = "e.g. HDFC ₹18,450 / Care ₹17,900 sent on WhatsApp; call back Monday" })
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lost -->
+                <div class="followup-section sec-lost" style="border-color:#dc3545">
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Why was it lost? <span class="text-danger">*</span></label>
+                            @Html.DropDownListFor(m => m.LostReason, ViewBag.LostReasons as List<SelectListItem>, "Select Reason", new { @class = "form-control", data_required = "Reason" })
+                            <span class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Renewed -->
+                <div class="followup-section sec-renewed" style="border-color:#28a745">
+                    <div class="form-section-title mt-0">New policy term</div>
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label>Renewed on</label>
+                            @Html.TextBoxFor(m => m.RenewedOn, d, new { @class = "form-control", type = "date" })
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>New Policy No</label>
+                            @Html.TextBoxFor(m => m.NewPolicyNo, new { @class = "form-control", placeholder = "Can be added later" })
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Insurance Company</label>
+                            @Html.DropDownListFor(m => m.InsuranceCompanyId, ViewBag.Companies as List<SelectListItem>, "Same as before", new { @class = "form-control" })
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label>New start date</label>
+                            @Html.TextBoxFor(m => m.NewStartDate, d, new { @class = "form-control", type = "date" })
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>New expiry date</label>
+                            @Html.TextBoxFor(m => m.NewExpiryDate, d, new { @class = "form-control", type = "date" })
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Sum Insured / IDV</label>
+                            @Html.TextBoxFor(m => m.SumInsured, new { @class = "form-control", type = "number", step = "1", min = "0" })
+                        </div>
+                    </div>
+                    <div class="row">
+                        @if (p.IsMotor)
+                        {
+                            <div class="col-md-3 form-group">
+                                <label>OD Premium</label>
+                                @Html.TextBoxFor(m => m.OdPremium, new { @class = "form-control fu-premium", type = "number", step = "0.01", min = "0" })
+                            </div>
+                            <div class="col-md-3 form-group">
+                                <label>TP Premium</label>
+                                @Html.TextBoxFor(m => m.TpPremium, new { @class = "form-control fu-premium", type = "number", step = "0.01", min = "0" })
+                            </div>
+                        }
+                        <div class="col-md-3 form-group">
+                            <label>Net Premium <span class="text-danger">*</span></label>
+                            @Html.TextBoxFor(m => m.NetPremium, new { @class = "form-control", type = "number", step = "0.01", min = "0", data_required = "Net premium" })
+                            <span class="text-danger"></span>
+                        </div>
+                        <div class="col-md-3 form-group">
+                            <label>GST</label>
+                            @Html.TextBoxFor(m => m.GstAmount, new { @class = "form-control", type = "number", step = "0.01", min = "0" })
+                        </div>
+                    </div>
+
+                    <div class="form-section-title">Payment</div>
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label>Payment Mode <span class="text-danger">*</span></label>
+                            @Html.DropDownListFor(m => m.PaymentMode, ViewBag.PaymentModes as List<SelectListItem>, "Select", new { @class = "form-control", data_required = "Payment mode" })
+                            <span class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Amount Paid <span class="text-danger">*</span></label>
+                            @Html.TextBoxFor(m => m.AmountPaid, new { @class = "form-control", type = "number", step = "0.01", min = "0", data_required = "Amount" })
+                            <span class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Payment Date</label>
+                            @Html.TextBoxFor(m => m.PaymentDate, d, new { @class = "form-control", type = "date" })
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 form-group fu-cheque">
+                            <label>Cheque No <span class="text-danger">*</span></label>
+                            @Html.TextBoxFor(m => m.ChequeNo, new { @class = "form-control", data_required = "Cheque no" })
+                            <span class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4 form-group fu-cheque">
+                            <label>Bank <span class="text-danger">*</span></label>
+                            @Html.TextBoxFor(m => m.BankName, new { @class = "form-control", data_required = "Bank" })
+                            <span class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4 form-group fu-utr">
+                            <label>UTR / Transaction Ref</label>
+                            @Html.TextBoxFor(m => m.UtrNo, new { @class = "form-control" })
+                        </div>
+                    </div>
+
+                    <div class="form-section-title">Proof that the broker got it</div>
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label>Given to broker on</label>
+                            @Html.TextBoxFor(m => m.SubmittedToBrokerOn, d, new { @class = "form-control", type = "date" })
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Broker staff</label>
+                            @Html.TextBoxFor(m => m.BrokerStaff, new { @class = "form-control" })
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Proof reference</label>
+                            @Html.TextBoxFor(m => m.ProofRef, new { @class = "form-control", placeholder = "WhatsApp / email / receipt" })
+                        </div>
+                    </div>
+                    <div class="form-check mb-2">
+                        @Html.CheckBoxFor(m => m.PolicyCopyReceived, new { @class = "form-check-input" })
+                        <label class="form-check-label" for="PolicyCopyReceived">Policy copy received</label>
+                    </div>
+                </div>
+
+                <div class="form-group mt-3">
+                    <label>Remarks</label>
+                    @Html.TextBoxFor(m => m.Remarks, new { @class = "form-control" })
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <a href="javascript:void(0);" class="btn btn-primary btn-submit-followup">Save</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("_Notification", false)
+
+<script>
+    $(function () {
+        var $m = $('#modal-followup');
+        var isMotor = @(p.IsMotor ? "true" : "false");
+
+        function currentStatus() { return $m.find('input[name=RenewalStatus]:checked').val() || ''; }
+
+        function toggleFollowUp() {
+            var s = currentStatus();
+            $m.find('.sec-quote').toggle(s === 'Quote Sent' || s === 'Follow Up');
+            $m.find('.sec-lost').toggle(s === 'Lost');
+            $m.find('.sec-renewed').toggle(s === 'Renewed');
+            var mode = $m.find('#PaymentMode').val();
+            $m.find('.fu-cheque').toggle(s === 'Renewed' && mode === 'Cheque');
+            $m.find('.fu-utr').toggle(s === 'Renewed' && mode !== '' && mode !== 'Cheque' && mode !== 'Cash');
+        }
+
+        $m.find('input[name=RenewalStatus]').on('change', toggleFollowUp);
+        $m.find('#PaymentMode').on('change', toggleFollowUp);
+        // Bootstrap's button toggle changes the radio after the click event.
+        $m.find('#grpStatus label').on('click', function () { setTimeout(toggleFollowUp, 0); });
+        toggleFollowUp();
+
+        $m.find('#NetPremium').on('change', function () {
+            var gst = $m.find('#GstAmount'), net = parseFloat($(this).val());
+            // Motor carries 18% GST; individual health/life cover is GST-exempt since 22-Sep-2025.
+            if (isMotor && !isNaN(net) && !gst.val()) gst.val((net * 0.18).toFixed(2));
+            var paid = $m.find('#AmountPaid');
+            if (!isNaN(net) && !paid.val()) paid.val((net + (parseFloat(gst.val()) || 0)).toFixed(0));
+        });
+
+        $m.find('.fu-premium').on('change', function () {
+            var od = parseFloat($m.find('#OdPremium').val()), tp = parseFloat($m.find('#TpPremium').val());
+            if (!isNaN(od) || !isNaN(tp)) $m.find('#NetPremium').val(((od || 0) + (tp || 0)).toFixed(2)).trigger('change');
+        });
+
+        $m.find('#NewStartDate').on('change', function () {
+            var v = $(this).val(); if (!v) return;
+            var dt = new Date(v + 'T00:00:00'); dt.setFullYear(dt.getFullYear() + 1); dt.setDate(dt.getDate() - 1);
+            var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+            $m.find('#NewExpiryDate').val(dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate()));
+        });
+
+        $m.find('.btn-submit-followup').on('click', function () {
+            var ok = true;
+            if (!currentStatus()) { $('#errStatus').text('Choose what happened.'); ok = false; } else { $('#errStatus').text(''); }
+            if (App.validate($m) && ok) { $('#frmFollowUp').submit(); }
+        });
+    });
+</script>

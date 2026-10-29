@@ -1,0 +1,44 @@
+@model PolicyTrackerWebClient.Domain.StatementLine
+
+<div class="modal fade" id="modal-link" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title h5">Link statement line to a policy</h1>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row small mb-2">
+                    <dt class="col-4">Customer</dt><dd class="col-8">@Model.CustomerName</dd>
+                    <dt class="col-4">Statement policy no</dt><dd class="col-8">@Model.PolicyNo</dd>
+                    <dt class="col-4">Start</dt><dd class="col-8">@Model.StartDate.ToDisplayDate()</dd>
+                    <dt class="col-4">Net premium</dt><dd class="col-8">@Model.NetPremium.ToRupees()</dd>
+                    <dt class="col-4">Value</dt><dd class="col-8">@Model.Value.ToRupees()</dd>
+                </dl>
+                <input type="hidden" id="linkLineId" value="@Model.Id" />
+                <div class="form-group mb-0">
+                    <label>Policy No in your register <span class="text-danger">*</span></label>
+                    <input type="text" id="linkPolicyNo" class="form-control" value="@Model.PolicyNo" />
+                    <small class="form-text text-muted">Use this when the broker mistyped the number or the name match failed.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <a href="javascript:void(0);" class="btn btn-primary" id="btnLink">Link</a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(function () {
+        $('#btnLink').on('click', function () {
+            App.loading(true);
+            $.ajax({
+                url: '@Url.Action("Link", "Statement")', type: 'POST', dataType: 'json',
+                data: { statementLineId: $('#linkLineId').val(), policyNo: $('#linkPolicyNo').val() }
+            }).done(function (data) {
+                if (App.notify(data)) { App.closeModals(); App.refreshList(); }
+            }).always(function () { App.loading(false); });
+        });
+    });
+</script>

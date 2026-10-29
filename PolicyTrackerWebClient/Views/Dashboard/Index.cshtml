@@ -1,0 +1,240 @@
+@model PolicyTrackerWebClient.Domain.DashboardSummary
+@{
+    ViewBag.Title = "Dashboard";
+    var monthText = Model.Month.ToString("MMMM yyyy");
+    var prev = Model.Month.AddMonths(-1).ToString("yyyy-MM");
+    var next = Model.Month.AddMonths(1).ToString("yyyy-MM");
+    var pending = Model.DueList.Where(x => !EnumsHelper.Is(x.RenewalStatus, Enums.RenewalStatus.Renewed) && !EnumsHelper.Is(x.RenewalStatus, Enums.RenewalStatus.Lost)).ToList();
+}
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <form method="get" action="@Url.Action("Index", "Dashboard")" class="row mb-2 align-items-center" id="frmDashboard">
+                <div class="col-md-4"><h1 class="m-0">Dashboard</h1></div>
+                <div class="col-md-8">
+                    <div class="d-flex flex-wrap justify-content-md-end align-items-center" style="gap:.5rem">
+                        @Html.DropDownList("brokerId", ViewBag.Brokers as List<SelectListItem>, "All brokers", new { @class = "form-control setPagesize", onchange = "this.form.submit()" })
+                        <div class="input-group" style="width:auto">
+                            <div class="input-group-prepend">
+                                <a class="btn btn-default" href="@Url.Action("Index", new { month = prev })" title="Previous month"><i class="fas fa-chevron-left"></i></a>
+                            </div>
+                            <input type="month" name="month" value="@ViewBag.Month" class="form-control" onchange="this.form.submit()" />
+                            <div class="input-group-append">
+                                <a class="btn btn-default" href="@Url.Action("Index", new { month = next })" title="Next month"><i class="fas fa-chevron-right"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Renewal KPIs -->
+            <div class="row">
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-info">
+                        <div class="inner"><h3>@Model.DueCount</h3><p>Due in @monthText</p></div>
+                        <div class="icon"><i class="fas fa-calendar-alt"></i></div>
+                        <a href="@Url.Action("Index", "Policy")" class="small-box-footer">All policies <i class="fas fa-arrow-circle-right"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-warning">
+                        <div class="inner"><h3>@Model.PendingCount</h3><p>Not renewed yet</p><span class="kpi-sub">Premium at stake @Model.PremiumAtRisk.ToRupees()</span></div>
+                        <div class="icon"><i class="fas fa-hourglass-half"></i></div>
+                        <a href="#due-list" class="small-box-footer">See the list <i class="fas fa-arrow-circle-down"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-success">
+                        <div class="inner"><h3>@Model.RenewedCount</h3><p>Renewed</p></div>
+                        <div class="icon"><i class="fas fa-check-circle"></i></div>
+                        <a href="@Url.Action("Index", "Policy", new { renewalStatus = "Renewed" })" class="small-box-footer">View <i class="fas fa-arrow-circle-right"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-secondary">
+                        <div class="inner"><h3>@Model.LostCount</h3><p>Lost</p></div>
+                        <div class="icon"><i class="fas fa-user-slash"></i></div>
+                        <a href="@Url.Action("Index", "Policy", new { renewalStatus = "Lost" })" class="small-box-footer">View <i class="fas fa-arrow-circle-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Commission KPIs -->
+            <div class="row">
+                <div class="col-md-3 col-6">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-danger"><i class="fas fa-search-minus"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Not on broker statement</span>
+                            <span class="info-box-number">@Model.MissingFromStatementCount</span>
+                            <a href="@Url.Action("Index", "Policy", new { statementStatus = "Missing" })" class="small">open list</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-primary"><i class="fas fa-file-invoice"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Commission per statement</span>
+                            <span class="info-box-number">@Model.CommissionPerStatement.ToRupees()</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-success"><i class="fas fa-university"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Received in bank</span>
+                            <span class="info-box-number">@Model.ReceivedInBank.ToRupees()</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="info-box">
+                        <span class="info-box-icon @(Model.UnexplainedGap > 1 ? "bg-danger" : "bg-light")"><i class="fas fa-exclamation-triangle"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Gap after TDS</span>
+                            <span class="info-box-number">@Model.UnexplainedGap.ToRupees()</span>
+                            <a href="@Url.Action("Index", "Report")" class="small">reconciliation</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Due this month, not renewed -->
+            <div class="card card-warning card-outline" id="due-list">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-bell mr-1"></i> Renewals due in @monthText – not renewed yet (@pending.Count)</h3>
+                    <div class="card-tools">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="chkShowClosed">
+                            <label class="custom-control-label" for="chkShowClosed">Show renewed / lost too</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                    <table class="table table-sm table-striped table-hover mb-0" id="tblDue">
+                        <thead>
+                            <tr>
+                                <th>Expiry</th>
+                                <th>Days left</th>
+                                <th>Customer</th>
+                                <th>Contact</th>
+                                <th>Category / Company</th>
+                                <th>Policy No</th>
+                                <th class="text-money">Last premium</th>
+                                <th>Status</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.DueList.Count == 0)
+                            {
+                                <tr><td colspan="9" class="text-center text-muted py-3">No renewals due in @monthText.</td></tr>
+                            }
+                            else if (pending.Count == 0)
+                            {
+                                <tr class="row-open"><td colspan="9" class="text-center text-success py-3"><i class="fas fa-check-circle"></i> Every renewal due in @monthText has been followed up.</td></tr>
+                            }
+                            @foreach (var item in Model.DueList)
+                            {
+                                var closed = EnumsHelper.Is(item.RenewalStatus, Enums.RenewalStatus.Renewed) || EnumsHelper.Is(item.RenewalStatus, Enums.RenewalStatus.Lost);
+                                <tr class="@(closed ? "row-closed text-muted" : "")" style="@(closed ? "display:none" : "")">
+                                    <td class="nowrap">@item.ExpiryDate.ToDisplayDate()</td>
+                                    <td>@(closed ? Html.Raw("") : Html.DaysLeft(item.DaysToExpiry))</td>
+                                    <td>
+                                        <strong>@item.CustomerName</strong>
+                                        @if (item.EldestAge.HasValue)
+                                        {<small class="text-muted"> (age @item.EldestAge)</small>}
+                                        @if (!string.IsNullOrEmpty(item.VehicleNo))
+                                        {<br /><small class="text-muted">@item.VehicleNo</small>}
+                                    </td>
+                                    <td>@Html.ContactLinks(item.MobileNo)</td>
+                                    <td>@item.Category<br /><small class="text-muted">@item.InsuranceCompany</small></td>
+                                    <td class="nowrap">@item.PolicyNo</td>
+                                    <td class="text-money">@((item.NetPremium ?? item.IndicativePremium).ToRupees())</td>
+                                    <td>
+                                        @Html.StatusBadge(string.IsNullOrEmpty(item.RenewalStatus) ? "Due" : item.RenewalStatus)
+                                        @if (item.QuoteSentOn.HasValue && EnumsHelper.Is(item.RenewalStatus, Enums.RenewalStatus.Quote_Sent))
+                                        {<br /><small class="text-muted">quote @item.QuoteSentOn.ToDisplayDate()</small>}
+                                        @if (!string.IsNullOrEmpty(item.LostReason))
+                                        {<br /><small class="text-muted">@item.LostReason</small>}
+                                    </td>
+                                    <td class="text-center nowrap">
+                                        <a href="javascript:void(0)" class="btn btn-xs btn-primary btn-followup" data-id="@item.Id"><i class="fas fa-reply"></i> Update</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Booked by us but missing on the broker's statement -->
+            <div class="card card-danger card-outline">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-search-minus mr-1"></i> Policies started in @monthText that are not on the broker's statement (@Model.NotOnStatement.Count)</h3>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                    <table class="table table-sm table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>Start</th>
+                                <th>Customer</th>
+                                <th>Category / Company</th>
+                                <th>Policy No</th>
+                                <th class="text-money">Net premium</th>
+                                <th class="text-money">Expected commission</th>
+                                <th>Statement</th>
+                                <th>Given to</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.NotOnStatement.Count == 0)
+                            {
+                                <tr><td colspan="8" class="text-center text-muted py-3">Nothing missing – every policy started this month is on a statement (or the statement hasn't arrived yet).</td></tr>
+                            }
+                            @foreach (var item in Model.NotOnStatement)
+                            {
+                                <tr>
+                                    <td class="nowrap">@item.StartDate.ToDisplayDate()</td>
+                                    <td>@item.CustomerName</td>
+                                    <td>@item.Category<br /><small class="text-muted">@item.InsuranceCompany</small></td>
+                                    <td class="nowrap">@item.PolicyNo</td>
+                                    <td class="text-money">@item.NetPremium.ToRupees()</td>
+                                    <td class="text-money">@item.ExpectedCommission.ToRupees()</td>
+                                    <td>@Html.StatusBadge(item.StatementStatus)</td>
+                                    <td>@item.BrokerStaff<br /><small class="text-muted">@item.SubmittedToBrokerOn.ToDisplayDate()</small></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @using (Ajax.BeginForm("FollowUp", "Policy", new AjaxOptions() { UpdateTargetId = "divFollowUp", InsertionMode = InsertionMode.Replace, LoadingElementId = "loading-element" }, new { @id = "frmFollowUp" }))
+    {
+        <div id="divFollowUp"></div>
+    }
+</div>
+
+<script>
+    $(function () {
+        App.toast(@Html.Js((object)ViewBag.NotificationType), @Html.Js((object)ViewBag.NotificationMsg));
+
+        $('#chkShowClosed').on('change', function () {
+            $('#tblDue .row-closed').toggle(this.checked);
+        });
+
+        $(document).on('click', '.btn-followup', function () {
+            App.openModal('@Url.Action("FollowUp", "Policy")/' + $(this).data('id'), '#divFollowUp');
+        });
+    });
+</script>

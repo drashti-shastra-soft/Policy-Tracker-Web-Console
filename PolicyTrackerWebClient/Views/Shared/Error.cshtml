@@ -1,0 +1,15 @@
+@model System.Web.Mvc.HandleErrorInfo
+@{
+    ViewBag.Title = "Error";
+}
+<div class="content-wrapper">
+    <section class="content pt-4">
+        <div class="error-page">
+            <h2 class="headline text-danger"><i class="fas fa-exclamation-triangle"></i></h2>
+            <div class="error-content">
+                <h3>Something went wrong.</h3>
+                <p>The request could not be completed. Please try again, or go back to the <a href="@Url.Action("Index", "Dashboard")">dashboard</a>.</p>
+            </div>
+        </div>
+    </section>
+</div>

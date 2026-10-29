@@ -1,0 +1,60 @@
+@model PolicyTrackerWebClient.Domain.PayoutLister
+
+<div class="card-header">
+    <a href="javascript:void(0)" class="btn btn-primary add-payout"><i class="fas fa-plus"></i> Add Bank Credit</a>
+    <span class="text-muted small ml-2">Enter each commission credit from your bank statement. Payments made through another firm can be left without a statement month.</span>
+</div>
+<div class="card-body p-0 table-responsive">
+    <table class="table table-sm table-striped table-bordered mb-0">
+        <thead>
+            <tr>
+                <th>Statement month</th>
+                <th>Received on</th>
+                <th class="text-money">Amount received</th>
+                <th>Paid by</th>
+                <th class="text-money">Commission per statement</th>
+                <th class="text-money">TDS</th>
+                <th class="text-money">Unexplained gap</th>
+                <th class="text-right">% received</th>
+                <th>Remarks</th>
+                <th colspan="2" class="text-center">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.List != null && Model.List.Count > 0)
+            {
+                foreach (var item in Model.List)
+                {
+                    <tr>
+                        <td class="nowrap">@(item.StatementMonth.HasValue ? item.StatementMonth.ToMonthText() : "Unallocated")</td>
+                        <td class="nowrap">@item.ReceivedOn.ToDisplayDate()</td>
+                        <td class="text-money"><strong>@item.AmountReceived.ToRupees()</strong></td>
+                        <td>@item.PaidByFirm</td>
+                        <td class="text-money">@item.CommissionPerStatement.ToRupees()</td>
+                        <td class="text-money">@item.Tds.ToRupees() @if (item.TdsRate.HasValue) {<small class="text-muted">(@item.TdsRate%)</small>}</td>
+                        <td class="text-money @(item.Unexplained > 1 ? "text-danger font-weight-bold" : "")">@item.Unexplained.ToRupees()</td>
+                        <td class="text-right">@(item.PercentReceived.HasValue ? item.PercentReceived.Value.ToString("0.0") + "%" : "")</td>
+                        <td>@item.Remarks</td>
+                        <td class="text-center"><a href="javascript:void(0);" data-id="@item.Id" class="icon-edit text-info"><i class="fas fa-edit"></i></a></td>
+                        <td class="text-center"><a href="javascript:void(0);" data-id="@item.Id" class="icon-delete text-danger"><i class="fas fa-trash"></i></a></td>
+                    </tr>
+                }
+                <tr class="font-weight-bold bg-light">
+                    <td colspan="2">Total</td>
+                    <td class="text-money">@Model.List.Sum(x => x.AmountReceived).ToRupees()</td>
+                    <td></td>
+                    <td class="text-money">@Model.List.Sum(x => x.CommissionPerStatement ?? 0).ToRupees()</td>
+                    <td class="text-money">@Model.List.Sum(x => x.Tds ?? 0).ToRupees()</td>
+                    <td class="text-money">@Model.List.Sum(x => x.Unexplained ?? 0).ToRupees()</td>
+                    <td colspan="4"></td>
+                </tr>
+            }
+            else
+            {
+                <tr><td class="text-center" colspan="11">No record found!</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+@Html.Hidden("Pagination.PageSize", Model.Pagination.PageSize)
+<script>$(function () { App.toast(@Html.Js((object)ViewBag.NotificationType), @Html.Js((object)ViewBag.NotificationMsg)); });</script>

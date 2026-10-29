@@ -1,0 +1,87 @@
+@model PolicyTrackerWebClient.Domain.StatementLineLister
+
+<div class="card-header">
+    <div class="d-flex flex-wrap align-items-center" style="gap:.5rem">
+        @Html.DropDownListFor(m => m.SearchCriteria.BrokerId, ViewBag.Brokers as List<SelectListItem>, "All brokers", new { @class = "form-control form-control-sm search-dropdown setPagesize" })
+        @Html.DropDownList("SearchCriteria.StatementMonth", ViewBag.Months as List<SelectListItem>, "All months", new { @class = "form-control form-control-sm search-dropdown setPagesize", id = "SearchCriteria_StatementMonth" })
+        @Html.DropDownListFor(m => m.SearchCriteria.MatchStatus, ViewBag.MatchStatuses as List<SelectListItem>, "All lines", new { @class = "form-control form-control-sm search-dropdown setPagesize" })
+        @Html.TextBoxFor(m => m.SearchCriteria.SearchText, new { @class = "form-control form-control-sm search-text", placeholder = "Customer / policy no – Enter", style = "max-width:240px" })
+        <span class="ml-auto">
+            <strong>Total @Model.TotalValue.ToRupees()</strong>
+            <a href="javascript:void(0)" class="btn btn-sm btn-outline-primary ml-2 btn-rematch" title="Try to match unmatched lines again"><i class="fas fa-sync"></i> Re-match</a>
+        </span>
+    </div>
+</div>
+<div class="card-body p-0 table-responsive">
+    <table class="table table-sm table-striped table-bordered mb-0">
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Start</th>
+                <th>Customer</th>
+                <th>Company / Product</th>
+                <th>Policy No</th>
+                <th class="text-money">Net premium</th>
+                <th class="text-money">Points</th>
+                <th class="text-money">Value</th>
+                <th>Matched to</th>
+                <th colspan="2" class="text-center">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.List != null && Model.List.Count > 0)
+            {
+                foreach (var item in Model.List)
+                {
+                    var matched = item.PolicyId.HasValue;
+                    <tr class="@(item.IsOtherPosCode ? "table-danger" : "")">
+                        <td class="nowrap">@item.StatementMonth.ToString("MMM-yy")</td>
+                        <td class="nowrap">@item.StartDate.ToDisplayDate()</td>
+                        <td>@item.CustomerName
+                            @if (item.IsOtherPosCode)
+                            {<br /><small class="text-danger"><i class="fas fa-exclamation-circle"></i> POS @item.PosCode @item.PosName</small>}
+                        </td>
+                        <td>@item.InsuranceCompany<br /><small class="text-muted">@item.Product</small></td>
+                        <td class="nowrap">@item.PolicyNo</td>
+                        <td class="text-money">@item.NetPremium.ToRupees()</td>
+                        <td class="text-money nowrap">
+                            @if (item.PointsOd.HasValue || item.PointsTp.HasValue)
+                            {<span>OD @item.PointsOd / TP @item.PointsTp</span>}
+                            else
+                            {<span>@item.PointsNet</span>}
+                        </td>
+                        <td class="text-money">
+                            @item.Value.ToRupees()
+                            @if (item.ValueDifference.HasValue && Math.Abs(item.ValueDifference.Value) > 1)
+                            {<br /><small class="text-danger" title="Premium × points does not equal the value paid">calc @item.CalculatedValue.ToRupees()</small>}
+                        </td>
+                        <td>
+                            @Html.StatusBadge(item.MatchStatus)
+                            @if (matched)
+                            {<br /><small>@item.LinkedCustomer</small>}
+                        </td>
+                        <td class="text-center nowrap">
+                            @if (matched)
+                            {
+                                <a href="javascript:void(0);" data-id="@item.Id" class="icon-unlink text-secondary" title="Unlink"><i class="fas fa-unlink"></i></a>
+                            }
+                            else
+                            {
+                                <a href="javascript:void(0);" data-id="@item.Id" class="icon-link text-primary mr-2" title="Link to a policy"><i class="fas fa-link"></i></a>
+                                <a href="javascript:void(0);" data-id="@item.Id" class="icon-create-policy text-success" title="Create policy from this line"><i class="fas fa-plus-circle"></i></a>
+                            }
+                        </td>
+                        <td class="text-center"><a href="javascript:void(0);" data-id="@item.Id" class="icon-delete text-danger" title="Delete"><i class="fas fa-trash"></i></a></td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td class="text-center" colspan="11">No record found! Import the broker's Excel above.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@Html.Partial("_Pager", Model.Pagination)
+<script>$(function () { App.toast(@Html.Js((object)ViewBag.NotificationType), @Html.Js((object)ViewBag.NotificationMsg)); });</script>

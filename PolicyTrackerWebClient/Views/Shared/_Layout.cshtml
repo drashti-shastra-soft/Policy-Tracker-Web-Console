@@ -1,0 +1,155 @@
+@{
+    var isAdmin = ViewBag.IsAdmin == true;
+    var loginUser = ViewBag.LoginUser as PolicyTrackerWebClient.Domain.User;
+    var controller = (ViewContext.RouteData.Values["controller"] ?? "").ToString();
+    Func<string, string> active = c => string.Equals(controller, c, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+    var masters = new[] { "Broker", "InsuranceCompany", "Category", "PointsGrid" };
+    var mastersOpen = masters.Any(m => string.Equals(m, controller, StringComparison.OrdinalIgnoreCase));
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title | Policy Tracker</title>
+
+    <!-- Google Font: Source Sans Pro -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="@Url.Content("~/Content/pluggins/fontawesome/all.min.css")">
+
+    <!-- Theme style -->
+    <link rel="stylesheet" href="@Url.Content("~/Content/dist/adminlte.min.css")">
+    <link href="@Url.Content("~/Content/css/custom.css")" rel="stylesheet" />
+
+    <!-- jQuery -->
+    <script src="@Url.Content("~/Scripts/plugins/jquery/jquery.min.js")"></script>
+    <!-- Bootstrap 4 -->
+    <script src="@Url.Content("~/Scripts/plugins/bootstrap/bootstrap.bundle.min.js")"></script>
+    <!-- AdminLTE App -->
+    <script src="@Url.Content("~/Scripts/dist/js/adminlte.min.js")"></script>
+
+    <script src="@Url.Content("~/Scripts/jquery.unobtrusive-ajax.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/app.js")"></script>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+    <div id="loading-element" class="custom-loader">
+        <div class="loader"><div class="spinner-border text-light" role="status"><span class="sr-only">Loading...</span></div></div>
+    </div>
+
+    <!-- Site wrapper -->
+    <div class="wrapper">
+        <!-- Navbar -->
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light no-print">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                @if (loginUser != null)
+                {
+                    <li class="nav-item d-none d-sm-inline-block">
+                        <span class="nav-link"><i class="fas fa-user-circle mr-1"></i>@loginUser.FirstName @loginUser.LastName</span>
+                    </li>
+                }
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+                        <i class="fas fa-expand-arrows-alt"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <!-- /.navbar -->
+        <!-- Main Sidebar Container -->
+        <aside class="main-sidebar sidebar-dark-primary elevation-4 no-print">
+            <a href="@Url.Action("Index", "Dashboard")" class="brand-link">
+                <i class="fas fa-shield-alt brand-image ml-3 mt-1" style="opacity:.8"></i>
+                <span class="brand-text font-weight-light">Policy Tracker</span>
+            </a>
+
+            <div class="sidebar">
+                <nav class="mt-2">
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", "Dashboard")" class="nav-link @active("Dashboard")">
+                                <i class="nav-icon fas fa-tachometer-alt"></i>
+                                <p>Dashboard</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", "Policy")" class="nav-link @active("Policy")">
+                                <i class="nav-icon fas fa-file-contract"></i>
+                                <p>Policies</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", "Statement")" class="nav-link @active("Statement")">
+                                <i class="nav-icon fas fa-file-excel"></i>
+                                <p>Broker Statements</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", "Payout")" class="nav-link @active("Payout")">
+                                <i class="nav-icon fas fa-university"></i>
+                                <p>Bank Payouts</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", "Report")" class="nav-link @active("Report")">
+                                <i class="nav-icon fas fa-balance-scale"></i>
+                                <p>Reconciliation</p>
+                            </a>
+                        </li>
+                        <li class="nav-item @(mastersOpen ? "menu-open" : "")">
+                            <a href="#" class="nav-link @(mastersOpen ? "active" : "")">
+                                <i class="nav-icon fas fa-cogs"></i>
+                                <p>Masters <i class="right fas fa-angle-left"></i></p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item"><a href="@Url.Action("Index", "Broker")" class="nav-link @active("Broker")"><i class="far fa-circle nav-icon"></i><p>Brokers</p></a></li>
+                                <li class="nav-item"><a href="@Url.Action("Index", "InsuranceCompany")" class="nav-link @active("InsuranceCompany")"><i class="far fa-circle nav-icon"></i><p>Insurance Companies</p></a></li>
+                                <li class="nav-item"><a href="@Url.Action("Index", "Category")" class="nav-link @active("Category")"><i class="far fa-circle nav-icon"></i><p>Categories</p></a></li>
+                                <li class="nav-item"><a href="@Url.Action("Index", "PointsGrid")" class="nav-link @active("PointsGrid")"><i class="far fa-circle nav-icon"></i><p>Points Grid</p></a></li>
+                            </ul>
+                        </li>
+                        @if (isAdmin)
+                        {
+                            <li class="nav-item">
+                                <a href="@Url.Action("Index", "User")" class="nav-link @active("User")">
+                                    <i class="nav-icon fas fa-users"></i>
+                                    <p>Users</p>
+                                </a>
+                            </li>
+                        }
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", "ChangePassword")" class="nav-link @active("ChangePassword")">
+                                <i class="nav-icon fas fa-key"></i>
+                                <p>Change Password</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", "Logout")" class="nav-link">
+                                <i class="nav-icon fas fa-sign-out-alt"></i>
+                                <p>Logout</p>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+
+        @RenderBody()
+
+        <footer class="main-footer no-print">
+            <div class="float-right d-none d-sm-block">
+                <b>Version</b> 1.0.0
+            </div>
+            <strong>Policy Tracker</strong> – renewals, statements and payouts in one place.
+        </footer>
+    </div>
+    <!-- ./wrapper -->
+    @RenderSection("scripts", required: false)
+</body>
+</html>

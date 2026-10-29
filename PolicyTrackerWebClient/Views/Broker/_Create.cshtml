@@ -1,0 +1,72 @@
+@model PolicyTrackerWebClient.Domain.Broker
+
+<div class="modal fade" id="modal-broker" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title h5">@(Model.Id > 0 ? "Edit Broker" : "Add Broker")</h1>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                @Html.HiddenFor(m => m.Id)
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label>Name <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.Name, new { @class = "form-control", data_required = "Name" })
+                        <span class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>TDS rate % <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.TdsRate, new { @class = "form-control", data_required = "TDS rate", type = "number", step = "0.01" })
+                        <span class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label>Your POS code</label>
+                        @Html.TextBoxFor(m => m.PosCode, new { @class = "form-control", placeholder = "As shown on the broker statement" })
+                        <span class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label>POS name</label>
+                        @Html.TextBoxFor(m => m.PosName, new { @class = "form-control" })
+                        <span class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 form-group">
+                        <label>Sales manager</label>
+                        @Html.TextBoxFor(m => m.SalesManager, new { @class = "form-control" })
+                        <span class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label>Contact no</label>
+                        @Html.TextBoxFor(m => m.ContactNo, new { @class = "form-control", type = "tel" })
+                        <span class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label>Email</label>
+                        @Html.TextBoxFor(m => m.EmailAddress, new { @class = "form-control", type = "email" })
+                        <span class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="form-check">
+                    @Html.CheckBoxFor(m => m.IsActive, new { @class = "form-check-input" })
+                    <label class="form-check-label" for="IsActive">Is Active?</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <a href="javascript:void(0);" class="btn btn-primary btn-submit-master">Submit</a>
+            </div>
+        </div>
+    </div>
+</div>
+@Html.Partial("_Notification", false)
+<script>
+    $(function () {
+        $('#modal-broker .btn-submit-master').on('click', function () {
+            if (App.validate('#modal-broker')) $('#frmCreate').submit();
+        });
+    });
+</script>

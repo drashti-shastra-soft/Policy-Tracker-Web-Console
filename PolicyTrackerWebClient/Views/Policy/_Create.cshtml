@@ -1,0 +1,263 @@
+@model PolicyTrackerWebClient.Domain.Policy
+@{
+    var d = "{0:yyyy-MM-dd}";
+}
+<div class="modal fade" id="modal-policy" tabindex="-1" aria-labelledby="PolicyModalLabel" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title h5" id="PolicyModalLabel">@(Model.Id > 0 ? "Edit Policy" : "Add Policy")</h1>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                @Html.HiddenFor(m => m.Id)
+                @Html.HiddenFor(m => m.RenewedPolicyId)
+                @Html.HiddenFor(m => m.RenewedFromPolicyId)
+                @Html.HiddenFor(m => m.RenewalRefNo)
+                @Html.Hidden("QuoteSentOn", Model.QuoteSentOn.HasValue ? Model.QuoteSentOn.Value.ToString("yyyy-MM-dd") : "")
+                @Html.HiddenFor(m => m.QuoteDetails)
+                @Html.Hidden("RenewedOn", Model.RenewedOn.HasValue ? Model.RenewedOn.Value.ToString("yyyy-MM-dd") : "")
+
+                <div class="form-section-title">Policy</div>
+                <div class="row">
+                    <div class="col-md-3 form-group">
+                        <label>Broker <span class="text-danger">*</span></label>
+                        @Html.DropDownListFor(m => m.BrokerId, ViewBag.Brokers as List<SelectListItem>, "Select Broker", new { @class = "form-control", data_required = "Broker" })
+                        <span class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>Business Type <span class="text-danger">*</span></label>
+                        @Html.DropDownListFor(m => m.BusinessType, ViewBag.BusinessTypes as List<SelectListItem>, "Select", new { @class = "form-control", data_required = "Business type" })
+                        <span class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>Category <span class="text-danger">*</span></label>
+                        @Html.DropDownListFor(m => m.CategoryId, ViewBag.Categories as List<SelectListItem>, "Select Category", new { @class = "form-control", data_required = "Category" })
+                        <span class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>Insurance Company <span class="text-danger">*</span></label>
+                        @Html.DropDownListFor(m => m.InsuranceCompanyId, ViewBag.Companies as List<SelectListItem>, "Select Company", new { @class = "form-control", data_required = "Insurance company" })
+                        <span class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 form-group">
+                        <label>Product / Plan</label>
+                        @Html.TextBoxFor(m => m.ProductPlan, new { @class = "form-control", placeholder = "e.g. Optima Secure" })
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>Policy No</label>
+                        @Html.TextBoxFor(m => m.PolicyNo, new { @class = "form-control", placeholder = "As printed on the policy" })
+                        <span class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>Previous Policy No</label>
+                        @Html.TextBoxFor(m => m.PreviousPolicyNo, new { @class = "form-control" })
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>Vehicle No <small class="text-muted">(motor)</small></label>
+                        @Html.TextBoxFor(m => m.VehicleNo, new { @class = "form-control", placeholder = "GJ01AB1234" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 form-group">
+                        <label>Start Date <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.StartDate, d, new { @class = "form-control", type = "date", data_required = "Start date" })
+                        <span class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>Expiry Date <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.ExpiryDate, d, new { @class = "form-control", type = "date", data_required = "Expiry date" })
+                        <span class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>Sum Insured / IDV</label>
+                        @Html.TextBoxFor(m => m.SumInsured, new { @class = "form-control", type = "number", step = "1", min = "0" })
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>Renewal Status</label>
+                        @Html.DropDownListFor(m => m.RenewalStatus, ViewBag.RenewalStatuses as List<SelectListItem>, new { @class = "form-control" })
+                    </div>
+                </div>
+                <div class="row" id="rowLostReason">
+                    <div class="col-md-3 form-group">
+                        <label>Lost Reason <span class="text-danger">*</span></label>
+                        @Html.DropDownListFor(m => m.LostReason, ViewBag.LostReasons as List<SelectListItem>, "Select Reason", new { @class = "form-control", data_required = "Lost reason" })
+                        <span class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-section-title">Customer</div>
+                <div class="row">
+                    <div class="col-md-4 form-group">
+                        <label>Customer Name <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.CustomerName, new { @class = "form-control", data_required = "Customer name" })
+                        <span class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>Mobile No</label>
+                        @Html.TextBoxFor(m => m.MobileNo, new { @class = "form-control", type = "tel", maxlength = "15" })
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>Email</label>
+                        @Html.TextBoxFor(m => m.EmailAddress, new { @class = "form-control", type = "email" })
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <label>Eldest Age</label>
+                        @Html.TextBoxFor(m => m.EldestAge, new { @class = "form-control", type = "number", min = "0", max = "120" })
+                    </div>
+                </div>
+
+                <div class="form-section-title">Premium &amp; points</div>
+                <div class="row">
+                    <div class="col-md-2 form-group">
+                        <label>OD Premium</label>
+                        @Html.TextBoxFor(m => m.OdPremium, new { @class = "form-control premium", type = "number", step = "0.01", min = "0" })
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <label>TP Premium</label>
+                        @Html.TextBoxFor(m => m.TpPremium, new { @class = "form-control premium", type = "number", step = "0.01", min = "0" })
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <label>Net Premium <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.NetPremium, new { @class = "form-control", type = "number", step = "0.01", min = "0", data_required = "Net premium" })
+                        <span class="text-danger"></span>
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <label>GST</label>
+                        @Html.TextBoxFor(m => m.GstAmount, new { @class = "form-control", type = "number", step = "0.01", min = "0" })
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <label>Renewal quote <small class="text-muted">(next year)</small></label>
+                        @Html.TextBoxFor(m => m.IndicativePremium, new { @class = "form-control", type = "number", step = "0.01", min = "0" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 form-group">
+                        <label>Points OD %</label>
+                        @Html.TextBoxFor(m => m.PointsOd, new { @class = "form-control", type = "number", step = "0.01" })
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <label>Points TP %</label>
+                        @Html.TextBoxFor(m => m.PointsTp, new { @class = "form-control", type = "number", step = "0.01" })
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <label>Points Net %</label>
+                        @Html.TextBoxFor(m => m.PointsNet, new { @class = "form-control", type = "number", step = "0.01" })
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <small class="form-text text-muted mt-4">Leave points blank to use the points grid (by category and eldest age) or the category default.</small>
+                    </div>
+                </div>
+
+                <div class="form-section-title">Payment &amp; proof of submission</div>
+                <div class="row">
+                    <div class="col-md-3 form-group">
+                        <label>Payment Mode</label>
+                        @Html.DropDownListFor(m => m.PaymentMode, ViewBag.PaymentModes as List<SelectListItem>, "Select", new { @class = "form-control" })
+                    </div>
+                    <div class="col-md-3 form-group pay-cheque">
+                        <label>Cheque No</label>
+                        @Html.TextBoxFor(m => m.ChequeNo, new { @class = "form-control" })
+                    </div>
+                    <div class="col-md-3 form-group pay-cheque">
+                        <label>Bank</label>
+                        @Html.TextBoxFor(m => m.BankName, new { @class = "form-control" })
+                    </div>
+                    <div class="col-md-3 form-group pay-utr">
+                        <label>UTR / Transaction Ref</label>
+                        @Html.TextBoxFor(m => m.UtrNo, new { @class = "form-control" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 form-group">
+                        <label>Amount Paid</label>
+                        @Html.TextBoxFor(m => m.AmountPaid, new { @class = "form-control", type = "number", step = "0.01", min = "0" })
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>Payment Date</label>
+                        @Html.TextBoxFor(m => m.PaymentDate, d, new { @class = "form-control", type = "date" })
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>Given to broker on</label>
+                        @Html.TextBoxFor(m => m.SubmittedToBrokerOn, d, new { @class = "form-control", type = "date" })
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>Broker staff</label>
+                        @Html.TextBoxFor(m => m.BrokerStaff, new { @class = "form-control", placeholder = "Who took the proposal" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label>Proof reference</label>
+                        @Html.TextBoxFor(m => m.ProofRef, new { @class = "form-control", placeholder = "WhatsApp screenshot / email / receipt no" })
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label>Remarks</label>
+                        @Html.TextBoxFor(m => m.Remarks, new { @class = "form-control" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-check">
+                            @Html.CheckBoxFor(m => m.PolicyCopyReceived, new { @class = "form-check-input" })
+                            <label class="form-check-label" for="PolicyCopyReceived">Policy copy received</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check">
+                            @Html.CheckBoxFor(m => m.IsActive, new { @class = "form-check-input" })
+                            <label class="form-check-label" for="IsActive">Is Active?</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <a href="javascript:void(0);" class="btn btn-primary btn-submit-policy">Submit</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("_Notification", false)
+
+<script>
+    $(function () {
+        var $m = $('#modal-policy');
+
+        function togglePolicySections() {
+            var status = $m.find('#RenewalStatus').val();
+            $m.find('#rowLostReason').toggle(status === 'Lost');
+            var mode = $m.find('#PaymentMode').val();
+            $m.find('.pay-cheque').toggle(mode === 'Cheque');
+            $m.find('.pay-utr').toggle(mode !== '' && mode !== 'Cheque' && mode !== 'Cash');
+        }
+
+        $m.find('#RenewalStatus, #PaymentMode').on('change', togglePolicySections);
+        togglePolicySections();
+
+        // Expiry defaults to start + 1 year - 1 day.
+        $m.find('#StartDate').on('change', function () {
+            var v = $(this).val();
+            if (!v) return;
+            var dt = new Date(v + 'T00:00:00');
+            dt.setFullYear(dt.getFullYear() + 1);
+            dt.setDate(dt.getDate() - 1);
+            var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+            $m.find('#ExpiryDate').val(dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate()));
+        });
+
+        // Motor: net = OD + TP when both are given.
+        $m.find('.premium').on('change', function () {
+            var od = parseFloat($m.find('#OdPremium').val()), tp = parseFloat($m.find('#TpPremium').val());
+            if (!isNaN(od) || !isNaN(tp)) $m.find('#NetPremium').val(((od || 0) + (tp || 0)).toFixed(2));
+        });
+
+        $m.find('.btn-submit-policy').on('click', function () {
+            if (App.validate($m)) { $('#frmCreate').submit(); }
+        });
+    });
+</script>

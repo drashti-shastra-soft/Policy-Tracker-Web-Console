@@ -1,0 +1,72 @@
+@model PolicyTrackerWebClient.Domain.BrokerLister
+@{
+    var isAdmin = ViewBag.IsAdmin == true;
+}
+<div class="card-header">
+    @if (isAdmin)
+    {
+        <a href="javascript:void(0)" class="btn btn-primary add-broker"><i class="fas fa-plus"></i> Add Broker</a>
+    }
+    
+</div>
+<div class="card-body p-0 table-responsive">
+    <table class="table table-sm table-striped table-bordered mb-0">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>POS code / name</th>
+                <th>Sales manager</th>
+                <th>Contact</th>
+                <th class="text-right">TDS %</th>
+                <th class="text-center">Status</th>
+                <th colspan="2" class="text-center">Action</th>
+            </tr>
+            <tr class="filters">
+                <th>@Html.TextBoxFor(m => m.SearchCriteria.Name, new { @class = "form-control search-text", placeholder = "Search – Enter" })</th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th>@Html.DropDownListFor(m => m.SearchCriteria.Status, ViewBag.Status as List<SelectListItem>, "All", new { @class = "form-control search-dropdown" })</th>
+                <th colspan="2"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.List != null && Model.List.Count > 0)
+            {
+                foreach (var item in Model.List)
+                {
+                    <tr>
+                        <td><strong>@item.Name</strong></td>
+                        <td>@item.PosCode<br /><small class="text-muted">@item.PosName</small></td>
+                        <td>@item.SalesManager</td>
+                        <td>@Html.ContactLinks(item.ContactNo)<br /><small>@item.EmailAddress</small></td>
+                        <td class="text-right">@item.TdsRate</td>
+                        <td class="text-center">
+                            @if (item.IsActive)
+                            {<span class="badge badge-success">Active</span>}
+                            else
+                            {<span class="badge badge-danger">Disabled</span>}
+                        </td>
+                        @if (isAdmin)
+                        {
+                            <td class="text-center"><a href="javascript:void(0);" data-id="@item.Id" class="icon-edit text-info"><i class="fas fa-edit"></i></a></td>
+                            <td class="text-center"><a href="javascript:void(0);" data-id="@item.Id" class="icon-delete text-danger"><i class="fas fa-trash"></i></a></td>
+                        }
+                        else
+                        {
+                            <td colspan="2"></td>
+                        }
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td class="text-center" colspan="8">No record found!</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@Html.Partial("_Pager", Model.Pagination)
+<script>$(function () { App.toast(@Html.Js((object)ViewBag.NotificationType), @Html.Js((object)ViewBag.NotificationMsg)); });</script>

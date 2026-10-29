@@ -1,0 +1,74 @@
+@model PolicyTrackerWebClient.Domain.User
+
+<div class="modal fade" id="modal-user" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title h5">@(Model.Id > 0 ? "Edit User" : "Add User")</h1>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                @Html.HiddenFor(m => m.Id)
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label>First name <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.FirstName, new { @class = "form-control", data_required = "First name" })
+                        <span class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label>Last name</label>
+                        @Html.TextBoxFor(m => m.LastName, new { @class = "form-control" })
+                        <span class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label>Email (login) <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.EmailAddress, new { @class = "form-control", data_required = "Email", type = "email" })
+                        <span class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label>Mobile no</label>
+                        @Html.TextBoxFor(m => m.MobileNo, new { @class = "form-control", type = "tel" })
+                        <span class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label>Role <span class="text-danger">*</span></label>
+                        @Html.DropDownListFor(m => m.RoleId, ViewBag.Roles as List<SelectListItem>, "Select Role", new { @class = "form-control", data_required = "Role" })
+                        <span class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label>@(Model.Id > 0 ? "New password (leave blank to keep)" : "Password")</label>
+                        @Html.PasswordFor(m => m.Password, new { @class = "form-control", autocomplete = "new-password" })
+                        <span class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="form-check">
+                    @Html.CheckBoxFor(m => m.IsActive, new { @class = "form-check-input" })
+                    <label class="form-check-label" for="IsActive">Is Active?</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <a href="javascript:void(0);" class="btn btn-primary btn-submit-master">Submit</a>
+            </div>
+        </div>
+    </div>
+</div>
+@Html.Partial("_Notification", false)
+<script>
+    $(function () {
+        $('#modal-user .btn-submit-master').on('click', function () {
+            if (App.validate('#modal-user') && fnCheckUserPassword()) $('#frmCreate').submit();
+        });
+    });
+
+    function fnCheckUserPassword() {
+        var $p = $('#modal-user #Password'), v = $p.val() || '', isNew = (parseInt($('#modal-user #Id').val()) || 0) === 0;
+        var $msg = $p.siblings('span.text-danger');
+        if ((isNew && v.length < 8) || (!isNew && v.length > 0 && v.length < 8)) { $msg.text('At least 8 characters.'); return false; }
+        $msg.text(''); return true;
+    }
+</script>

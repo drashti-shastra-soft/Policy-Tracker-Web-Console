@@ -1,0 +1,5 @@
+@* Shows the notification set by Notify()/NotifyError() after an Ajax form post. Model = keep modal open on success. *@
+@model bool
+<script>
+    $(function () { App.afterSave(@Html.Js((object)ViewBag.NotificationType), @Html.Js((object)ViewBag.NotificationMsg), @(Model ? "true" : "false")); });
+</script>

@@ -1,0 +1,87 @@
+@model PolicyTrackerWebClient.Domain.PolicyLister
+
+<div class="card-header">
+    <a href="javascript:void(0)" class="btn btn-primary add-policy"><i class="fas fa-plus"></i> Add Policy</a>
+    <div class="card-tools d-flex align-items-center" style="gap:.4rem">
+        <label class="mb-0 small text-muted">Expiry</label>
+        @Html.TextBoxFor(m => m.SearchCriteria.ExpiryFrom, "{0:yyyy-MM-dd}", new { @class = "form-control form-control-sm search-dropdown", type = "date" })
+        <span class="small text-muted">to</span>
+        @Html.TextBoxFor(m => m.SearchCriteria.ExpiryTo, "{0:yyyy-MM-dd}", new { @class = "form-control form-control-sm search-dropdown", type = "date" })
+    </div>
+</div>
+<div class="card-body p-0 table-responsive">
+    <table class="table table-sm table-striped table-bordered mb-0">
+        <thead>
+            <tr>
+                <th>Customer</th>
+                <th>Category / Company</th>
+                <th>Policy No</th>
+                <th>Start</th>
+                <th>Expiry</th>
+                <th class="text-money">Net premium</th>
+                <th class="text-money">Expected</th>
+                <th class="text-money">Received</th>
+                <th>Renewal</th>
+                <th>Statement</th>
+                <th colspan="3" class="text-center">Action</th>
+            </tr>
+            <tr class="filters">
+                <th>@Html.TextBoxFor(m => m.SearchCriteria.SearchText, new { @class = "form-control search-text", placeholder = "Name / policy / mobile / vehicle – Enter" })</th>
+                <th>
+                    @Html.DropDownListFor(m => m.SearchCriteria.CategoryId, ViewBag.Categories as List<SelectListItem>, "All categories", new { @class = "form-control search-dropdown mb-1" })
+                    @Html.DropDownListFor(m => m.SearchCriteria.InsuranceCompanyId, ViewBag.Companies as List<SelectListItem>, "All companies", new { @class = "form-control search-dropdown" })
+                </th>
+                <th>@Html.DropDownListFor(m => m.SearchCriteria.BrokerId, ViewBag.Brokers as List<SelectListItem>, "All brokers", new { @class = "form-control search-dropdown" })</th>
+                <th colspan="5"></th>
+                <th>@Html.DropDownListFor(m => m.SearchCriteria.RenewalStatus, ViewBag.RenewalStatuses as List<SelectListItem>, "All", new { @class = "form-control search-dropdown" })</th>
+                <th>@Html.DropDownListFor(m => m.SearchCriteria.StatementStatus, ViewBag.StatementStatuses as List<SelectListItem>, "All", new { @class = "form-control search-dropdown" })</th>
+                <th colspan="3"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.List != null && Model.List.Count > 0)
+            {
+                foreach (var item in Model.List)
+                {
+                    <tr>
+                        <td>
+                            <strong>@item.CustomerName</strong>
+                            @if (!string.IsNullOrEmpty(item.BusinessType))
+                            {<small class="text-muted"> · @item.BusinessType</small>}
+                            <br />@Html.ContactLinks(item.MobileNo)
+                        </td>
+                        <td>@item.Category<br /><small class="text-muted">@item.InsuranceCompany @item.ProductPlan</small></td>
+                        <td class="nowrap">@item.PolicyNo
+                            @if (!string.IsNullOrEmpty(item.VehicleNo))
+                            {<br /><small class="text-muted">@item.VehicleNo</small>}
+                        </td>
+                        <td class="nowrap">@item.StartDate.ToDisplayDate()</td>
+                        <td class="nowrap">@item.ExpiryDate.ToDisplayDate()<br />@Html.DaysLeft(item.DaysToExpiry > 60 ? (int?)null : item.DaysToExpiry)</td>
+                        <td class="text-money">@item.NetPremium.ToRupees()</td>
+                        <td class="text-money">@item.ExpectedCommission.ToRupees()</td>
+                        <td class="text-money">
+                            @item.CommissionReceived.ToRupees()
+                            @if (item.Shortfall.HasValue && item.Shortfall > 1)
+                            {<br /><small class="text-danger">short @item.Shortfall.ToRupees()</small>}
+                        </td>
+                        <td>@Html.StatusBadge(string.IsNullOrEmpty(item.RenewalStatus) ? "Due" : item.RenewalStatus)</td>
+                        <td>@Html.StatusBadge(item.StatementStatus)
+                            @if (item.StatementMonth.HasValue)
+                            {<br /><small class="text-muted">@item.StatementMonth.ToMonthText()</small>}
+                        </td>
+                        <td class="text-center"><a href="javascript:void(0);" data-id="@item.Id" class="icon-followup text-primary" title="Renewal follow-up"><i class="fas fa-reply"></i></a></td>
+                        <td class="text-center"><a href="javascript:void(0);" data-id="@item.Id" class="icon-edit text-info" title="Edit"><i class="fas fa-edit"></i></a></td>
+                        <td class="text-center"><a href="javascript:void(0);" data-id="@item.Id" class="icon-delete text-danger" title="Delete"><i class="fas fa-trash"></i></a></td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td class="text-center" colspan="13">No record found!</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@Html.Partial("_Pager", Model.Pagination)
+<script>$(function () { App.toast(@Html.Js((object)ViewBag.NotificationType), @Html.Js((object)ViewBag.NotificationMsg)); });</script>

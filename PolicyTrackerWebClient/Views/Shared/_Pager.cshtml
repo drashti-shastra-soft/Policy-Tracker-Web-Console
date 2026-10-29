@@ -1,0 +1,24 @@
+@model PolicyTrackerWebClient.Domain.Pagination
+@{
+    var sizes = ViewBag.Pagination as List<SelectListItem> ?? new List<SelectListItem>();
+}
+<div class="card-footer clearfix no-print" style="background-color: white;">
+    <div class="row">
+        <div class="col-lg-7 col-md-5 d-flex align-items-center" style="gap:.5rem">
+            <label class="mb-0">Page Size:</label>
+            @Html.DropDownList("Pagination.PageSize", sizes, new { @class = "form-control filter-pagination setPagesize", id = "Pagination_PageSize" })
+            <span class="text-muted small">@Model.TotalRecord record(s)</span>
+        </div>
+        <div class="col-lg-5 col-md-7">
+            <div class="DataNavigationTab" id="pager" data-current="@Model.CurrentPage" data-total="@Model.TotalPage" data-size="@Model.PageSize">
+                <input type="button" value="First" onclick="btnPage('First');" class="btn btn-secondary btn-sm" />
+                <input type="button" value="Previous" onclick="btnPage('Previous')" class="btn btn-secondary btn-sm" />
+                <label style="margin:0; padding: 0;"> @Model.CurrentPage / @Model.TotalPage</label>
+                <input type="button" value="Next" onclick="btnPage('Next')" class="btn btn-secondary btn-sm" />
+                <input type="button" value="Last" onclick="btnPage('Last')" class="btn btn-secondary btn-sm" />
+            </div>
+        </div>
+    </div>
+</div>
+@Html.Hidden("Pagination.Skip", Model.Skip, new { id = "Pagination_Skip" })
+@Html.Hidden("Pagination.TotalRecord", Model.TotalRecord, new { id = "Pagination_TotalRecord" })

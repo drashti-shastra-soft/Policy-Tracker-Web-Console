@@ -1,0 +1,34 @@
+.setPagesize { width: fit-content; }
+.DataNavigationTab { display: flex; justify-content: end; align-items: center; gap: 10px; }
+@media (max-width: 767px) { .DataNavigationTab { justify-content: left; margin-top: 10px; } }
+
+.custom-loader { position: fixed; top: 0; left: 0; background: rgb(0 0 0 / 35%); height: 100%; width: 100%; z-index: 2000; display: none; }
+.custom-loader .loader { display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; }
+
+.table td, .table th { vertical-align: middle; }
+.table-sm td, .table-sm th { font-size: .9rem; }
+.table thead tr.filters th { padding: .3rem; background: #f8f9fa; }
+.table thead tr.filters .form-control { height: calc(1.8rem + 2px); padding: .15rem .4rem; font-size: .85rem; }
+.text-money { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nowrap { white-space: nowrap; }
+.badge { font-size: 80%; font-weight: 600; }
+
+.small-box .inner h3 { font-size: 1.9rem; }
+.kpi-sub { font-size: .85rem; opacity: .9; }
+
+.days-left { min-width: 70px; display: inline-block; }
+.contact-links a { margin-right: .4rem; }
+.contact-links .fa-whatsapp { color: #25D366; }
+
+.followup-section { border-left: 3px solid #17a2b8; padding-left: .75rem; margin-top: .5rem; }
+.form-section-title { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: #6c757d; font-weight: 700; margin: .75rem 0 .35rem; border-bottom: 1px solid #e9ecef; }
+
+.toasts-top-right { z-index: 3000; }
+
+@media print {
+    .no-print, .main-sidebar, .main-header, .main-footer, .btn, form .card-header { display: none !important; }
+    .content-wrapper { margin-left: 0 !important; background: #fff !important; }
+    .card { box-shadow: none !important; border: 1px solid #ddd; break-inside: avoid; }
+    body { font-size: 11px; }
+    a[href]:after { content: none !important; }
+}
