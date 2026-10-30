@@ -1,27 +1,44 @@
-# Policy Tracker – setup
+# Policy Tracker Web Console
 
-Two solutions, same layout as AttendEdge:
+Policy Tracker Web Console is a responsive web application for insurance agents to track every policy placed through the broker. Agents can record fresh and renewal policies across life, health, motor, and general insurance, match them against broker statements to catch missing entries and lost commission, and monitor upcoming renewals, premiums, and payouts in one place. The console is built with ASP.NET MVC, consumes the Policy Tracker Web API, and features role-based access and secure login.
 
-- **Service** – `E:\AE_WS\Service\Repos\PolicyTracker\PolicyTrackerWebService.sln` (Web API, https://localhost:44391)
-- **Client** – `E:\AE_WS\Client\Repos\PolicyTracker\PolicyTrackerWebClient.sln` (MVC, https://localhost:44392)
+## Features
 
-## 1. Database
-1. Open `Database\PolicyTrackerDB.sql` in SSMS and run it (F5). It creates **PolicyTrackerDB** and loads
-   163 policies, 109 broker-statement lines (Mar–Sep 2026, total ₹2,42,919) and the 8 bank credits.
-2. In the service `Web.config`, set the `PolicyTrackerDBEntities` connection string to your SQL Server
-   (default: `.\SQLEXPRESS` with Windows authentication).
+- **Authentication** — secure sign-in with role-based access for agents and admins.
+- **Dashboard** — overview of active policies, upcoming renewals, pending premiums, and commission summaries.
+- **Client management** — manage client records, contact details, and policy history.
+- **Policy management** — record fresh and renewal policies across Life (LIC), Health, Motor, and General insurance.
+- **Broker statement matching** — upload or view broker statements and match them against recorded policies to identify missing entries.
+- **Lost commission tracking** — highlight policies present in the broker statement but missing from the agent's records, indicating potential lost commission.
+- **Renewal monitoring** — track upcoming renewals, due dates, and policy status.
+- **Premium tracking** — monitor premium amounts, payment status, and due dates.
+- **Payout tracking** — view expected payouts and commissions.
+- **Reports** — agent-wise, policy-wise, and period-wise reports for renewals, premiums, and commissions.
+- **Shared web UI** — Razor views, shared layout, pagination helper, and client-side validation.
+- **Responsive design** — mobile-ready layout for agents using phones and tablets in the field.
 
-## 2. Build and run
-1. Open each solution in Visual Studio 2022 → right-click the solution → **Restore NuGet Packages** → Build.
-2. Start the service first, then the client (or set both as startup projects in one VS window each).
-3. If you change the service port, update `APIBaseUrl` in the client `Web.config` (it must end in `/api`).
+> Feature descriptions are based on the controllers, domain models, services, and views present in this repository. Actual permissions and backend behavior may depend on the connected Policy Tracker Web API.
 
-## 3. First login
-- Email: **admin@policytracker.local**
-- Password: **NQjkL8h1lrU9V@7**
-- Change it straight away (sidebar → Change Password), then add your staff under **Users**.
+## Technology stack
 
-## 4. Before going live
-- Replace `SecretKey` in the service `Web.config` with your own random value (32+ characters).
-- Fill the **Points Grid** (Masters) from the broker's payout grid so expected commission uses age bands;
-  until then it uses the points written on each policy, else the category default.
+- C# and .NET Framework 4.8 (or `<your target framework>`)
+- ASP.NET MVC with Razor views
+- Visual Studio solution (`PolicyTrackerWebConsole.sln`)
+- Dependency injection configured through Unity
+- HTTP client/service layer for communicating with the Policy Tracker Web API
+- HTML, CSS, Bootstrap, JavaScript, and jQuery-based MVC views
+
+## Solution structure
+
+```text
+V4/
+├── PolicyTrackerWebConsole.sln
+├── PolicyTrackerWebConsole/              # ASP.NET MVC web application
+│   ├── Controllers/                      # MVC request handling
+│   ├── Views/                            # Razor UI pages
+│   ├── App_Start/                        # Routes, filters, Unity setup
+│   ├── Config/                           # Environment-specific app settings
+│   └── Web.config
+├── PolicyTrackerWebConsole.Domain/       # Domain models and list/pagination models
+├── PolicyTrackerWebConsole.Infrastructure/ # Service interfaces, helpers, constants, exceptions
+└── PolicyTrackerWebConsole.Service/      # Service implementations and API communication
